@@ -69,7 +69,7 @@ class Polygon:
             i += 1
             nx = i % ln
 
-            yield Line(self.points[n], self.points[nx])
+            yield Line.from_points(self.points[n], self.points[nx])
 
     def is_clockwise(self):
         ln = len(self.points)

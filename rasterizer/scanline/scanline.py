@@ -4,11 +4,11 @@ from primitives import Polygon
 from . raster_state import RasterState
 
 
-def get_raster_lines(poly: Polygon) -> Iterable[Tuple[int, int]]:
+def get_scanline_bucket(poly: Polygon) \
+     -> Tuple[List[int], List[List[RasterState]]]:
     """
-    `get_raster_lines` yields a tuple of two integer.
-    This function should yields an even number of tuples, denoting start
-    and end position to fill with color.
+    This function generates AET bucket required for the scanline rasterizer
+    to work.
     """
 
     if len(poly.points) < 3:
@@ -55,17 +55,21 @@ def get_raster_lines(poly: Polygon) -> Iterable[Tuple[int, int]]:
 
         bucket_val[idx].append(RasterState(e, ymax, x, dt.x, dt.y))
 
+    return bucket_idx, bucket_val
+
+
+def get_raster_lines(
+    bucket_idx: List[int],
+    bucket_val: List[List[RasterState]]
+) -> Iterable[Tuple[int, int]]:
+    """
+    `get_raster_lines` yields a tuple of three integers, denoting start
+    and end position to fill with color: (y, x1, x2)
+    """
+
     bln = len(bucket_idx)
     if bln <= 0:
         return
-
-    """
-    print("---- SET ----")
-    for k, v in zip(bucket_idx, bucket_val):
-        print(k, "=>", v)
-
-    print("---- AET ----")
-    """
 
     # -- process the bucket
     y: int = bucket_idx.pop(0)  # current y
@@ -94,9 +98,6 @@ def get_raster_lines(poly: Polygon) -> Iterable[Tuple[int, int]]:
     deletes: List[RasterState] = []
 
     while sln > 0:
-        # print(sets)
-        print("y =", y)
-
         # 1. delete "single" expired edges
         if sln > 0:
             deletes = []
@@ -150,11 +151,8 @@ def get_raster_lines(poly: Polygon) -> Iterable[Tuple[int, int]]:
             break
 
         # 3. draw lines
-        # print(sets)  # TODO remove debugging
         for st in sets:
-            yield (st.x, y)  # boundary points
-
-        # print("-")
+            yield (st.x, y)
 
         # 4. delete "double" expired edges
         # TODO.
@@ -166,8 +164,6 @@ def get_raster_lines(poly: Polygon) -> Iterable[Tuple[int, int]]:
 
         for st in deletes:
             sets.remove(st)
-
-        # print(sets)
 
         # 5. update current sets
         for st in sets:

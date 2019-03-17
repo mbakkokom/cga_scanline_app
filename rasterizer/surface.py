@@ -2,7 +2,6 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPainter, QPen, QColor
 
 from . polygon_factory import PolygonFactory
-from . scanline import get_raster_lines
 
 
 class RasterSurface(QWidget):
@@ -10,37 +9,27 @@ class RasterSurface(QWidget):
     This widget helps manage primitives and shows the rasterized result.
     """
 
-    def __init__(self, parent=None, polygonFactory=None):
+    def __init__(self, parent=None, polygonFactory: PolygonFactory = None):
         super().__init__(parent)
 
         if polygonFactory is None:
             polygonFactory = PolygonFactory()
-        
+
         self.polygonFactory = polygonFactory
 
     def paintEvent(self, event):
+        height = self.height()
+
         painter = QPainter(self)
         pen: QPen = painter.pen()
 
         blockColor = QColor(0, 0, 0, 255)
+        painter.eraseRect(0, 0, self.width(), height)
 
-        if self.targetShape is None:
-            super().paintEvent(event)
-        else:
-            painter.eraseRect(0, 0, self.width, self.height)
-            prev = None
-
-            for pos in get_raster_lines(self.targetShape):
-                print(pos)
-
-                if prev is None:
-                    prev = pos
-                else:
-                    # add scaling
-                    y = self.height - (prev[1])
-
-                    x1 = prev[0]
-                    x2 = pos[0]
+        for poly in self.polygonFactory.polygons:
+            if poly.has_cache:
+                for y, x1, x2 in poly.cachedLines:
+                    y = height - y
 
                     pen.setColor(blockColor)
                     painter.setPen(pen)
@@ -53,13 +42,14 @@ class RasterSurface(QWidget):
                         QColor(0, 0, 0, 255)
                     )
 
-                    prev = None
-
-            pen.setColor(QColor(255, 255, 255, 255))
-            painter.setPen(pen)
-            for ln in self.targetShape.lines_iter():
+        """
+        pen.setColor(QColor(255, 255, 255, 255))
+        painter.setPen(pen)
+        for poly in self.polygonFactory.polygons:
+            for ln in poly.lines_iter():
                 painter.drawLine(
                     ln.start.x,
-                    self.height - ln.start.y,
+                    height - ln.start.y,
                     ln.end.x,
-                    self.height - ln.end.y)
+                    height - ln.end.y)
+        """

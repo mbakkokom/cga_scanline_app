@@ -1,7 +1,7 @@
 from typing import List, Tuple, Optional
 
 from primitives import Point, Polygon
-from . scanline.scanline import get_raster_lines
+from . scanline.scanline import get_scanline_bucket, get_raster_lines
 
 
 class PolygonHelper(Polygon):
@@ -12,7 +12,7 @@ class PolygonHelper(Polygon):
     def __init__(self, *args, parent=None):
         super().__init__(*args)
         self.parent = parent
-        self.update_cache()
+        # self.update_cache()
 
     @staticmethod
     def from_polygon(p: Polygon):
@@ -23,30 +23,45 @@ class PolygonHelper(Polygon):
         return PolygonHelper(*[Point(x, y) for x, y in points])
 
     # --
+    @property
+    def has_cache(self) -> bool:
+        return all(
+            [
+                hasattr(self, i)
+                for i in ("cachedBucketIds", "cachedBucketVals", "cachedLines")
+            ]
+        )
+
     def update_cache(self) -> bool:
         """
         Generates a list of tuple with three integers: y, x1, x2
         """
-        self.cached = []
-        prev = None
+        self.cachedBucketIds, self.cachedBucketVals = get_scanline_bucket(self)
+        self.cachedLines = []
 
-        for x, y in get_raster_lines(self):
+        prev = None
+        for x, y in get_raster_lines(
+            self.cachedBucketIds,
+            self.cachedBucketVals
+        ):
             if prev is None:
                 prev = (y, x)
             else:
-                if prev[0] != y:
+                y1 = prev[0]
+                if y1 != y:
                     return False
 
-                self.cached.append((prev[0], prev[1], x))
+                self.cachedLines.append((y, prev[1], x))
                 prev = None
 
         return prev is None
 
+    # TODO: remove?
     def get_cached_raster(self) -> List[Tuple[int, int, int]]:
         """
         Returns a list of tuple with three integers: y, x1, x2
         """
-        return self.cached
+        return self.cachedLines
     # --
 
     def add_point(self, x: int, y: int) -> None:
@@ -114,7 +129,7 @@ class PolygonFactory:
         self.polygons: List[PolygonHelper] = list()
 
     def create_polygon(self, points: List[Point]) -> PolygonHelper:
-        poly = PolygonHelper(*points)
+        poly = PolygonHelper(*points, parent=self)
         self.polygons.append(poly)
         return poly
 
