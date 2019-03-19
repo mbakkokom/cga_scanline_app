@@ -16,7 +16,6 @@ class PolygonHelper(Polygon):
 
         # additional parameters
         self.fillColor: Tuple[int, int, int, int] = (0, 0, 0, 0)
-        self.outlineEnabled: bool = True
         self.outlineColor: Tuple[int, int, int, int] = (0, 0, 0, 0)
         self.outlineThickness: int = 0
 

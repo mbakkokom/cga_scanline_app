@@ -127,7 +127,7 @@ def get_raster_lines(
                         # deletes.append(rs1)
                         # deletes.append(rs2)
                     else:
-                        # idk why...
+                        # FIXME additional conditionals
                         deletes.append(rs1)
                 elif rs2 not in deletes and rs2.edge.end.y == y:
                     if rs1.edge.start == rs2.edge.start:  # V shape

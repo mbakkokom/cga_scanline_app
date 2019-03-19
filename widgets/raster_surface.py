@@ -54,16 +54,17 @@ class RasterSurface(QWidget):
                         col
                     )
 
-        """
-        pen.setColor(QColor(255, 255, 255, 255))
-        painter.setPen(pen)
         for poly in self.polygonFactory.polygons:
-            for ln in poly.lines_iter():
-                painter.drawLine(
-                    ln.start.x,
-                    height - ln.start.y,
-                    ln.end.x,
-                    height - ln.end.y)
-        """
+            if poly.outlineThickness > 0:
+                col = poly.outlineColor
+                pen.setColor(QColor(col[0], col[1], col[2], col[3]))
+                pen.setWidth(poly.outlineThickness)
+                painter.setPen(pen)
+                for ln in poly.lines_iter():
+                    painter.drawLine(
+                        ln.start.x,
+                        height - ln.start.y,
+                        ln.end.x,
+                        height - ln.end.y)
 
         self.renderEnd.emit(painter)

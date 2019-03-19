@@ -86,8 +86,9 @@ class PolygonList(QListWidget):
         deletes = []
 
         for i in self.selectedItems():
-            row = self.takeItem(self.row(i))
-            idx = row.data(Qt.UserRole)
+            idx = self.row(i)
+            row = self.takeItem(idx)
+            # idx = int(row.data(Qt.UserRole))
             deletes.append(self.polygonFactory.polygons[idx])
             del(row)
 

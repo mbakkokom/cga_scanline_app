@@ -55,10 +55,7 @@ class MainWindow(QMainWindow):
             "Draw",
             self._rightPaneLayoutWrapper
         )
-        self._drawBeginButton.clicked.connect(
-            # TODO create a discrete function
-            lambda x: self._userDrawToolHelper.beginNewPolygon()
-        )
+        self._drawBeginButton.clicked.connect(self.createNewPolygon)
         self._rightPaneLayout.addWidget(self._drawBeginButton)
 
         # Packing
@@ -68,13 +65,21 @@ class MainWindow(QMainWindow):
     def polygonsChanged(self) -> None:
         self._polygonList.polygonsChange()
 
+    @pyqtSlot()
+    def createNewPolygon(self):
+        self._userDrawToolHelper.beginNewPolygon()
+
     @pyqtSlot(bool, PolygonHelper)
     def userDrawNewPolygon(self,
                            confirm: bool,
                            polygon: PolygonHelper) -> None:
         if confirm is True:
+            # TODO default properties
             polygon.fillColor = (255, 255, 255, 255)
+            polygon.outlineColor = (255, 0, 0, 255)
+            polygon.outlineThickness = 3
             polygon.name = "new"
+
             polygon.update_cache()
             self.polygonFactory.add_polygon(polygon)
             self._polygonList.polygonsChange()
