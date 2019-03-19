@@ -1,5 +1,6 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPainter, QPen, QColor
+from PyQt5.QtCore import pyqtSignal
 
 from . polygon_factory import PolygonFactory
 
@@ -8,6 +9,10 @@ class RasterSurface(QWidget):
     """
     This widget helps manage primitives and shows the rasterized result.
     """
+
+    # Signals
+    renderBegin = pyqtSignal(QPainter)
+    renderEnd = pyqtSignal(QPainter)
 
     def __init__(self, parent=None, polygonFactory: PolygonFactory = None):
         super().__init__(parent)
@@ -26,8 +31,15 @@ class RasterSurface(QWidget):
         blockColor = QColor(0, 0, 0, 255)
         painter.eraseRect(0, 0, self.width(), height)
 
-        for poly in self.polygonFactory.polygons:
+        self.renderBegin.emit(painter)
+
+        for poly in reversed(self.polygonFactory.polygons):
             if poly.has_cache:
+                col = QColor(
+                    poly.fillColor[0], poly.fillColor[1],
+                    poly.fillColor[2], poly.fillColor[3]
+                )
+
                 for y, x1, x2 in poly.cachedLines:
                     y = height - y
 
@@ -39,7 +51,7 @@ class RasterSurface(QWidget):
                         y,
                         x2 - x1,
                         1,
-                        QColor(0, 0, 0, 255)
+                        col
                     )
 
         """
@@ -53,3 +65,5 @@ class RasterSurface(QWidget):
                     ln.end.x,
                     height - ln.end.y)
         """
+
+        self.renderEnd.emit(painter)

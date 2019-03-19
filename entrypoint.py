@@ -8,11 +8,33 @@ from primitives.point import Point
 app = QApplication(sys.argv)
 
 mw = MainWindow()
-mw._rasterSurface.polygonFactory.create_polygon([
+
+p1 = mw._rasterSurface.polygonFactory.create_polygon([
     Point(0, 0),
-    Point(20, 0),
-    Point(10, 20)
-]).update_cache()
+    Point(200, 0),
+    Point(100, 200)
+], name="green")
+p1.update_cache()
+p1.fillColor = (75, 255, 125, 255)
+
+p2 = mw._rasterSurface.polygonFactory.create_polygon([
+    Point(200, 400),
+    Point(300, 100),
+    Point(500, 200)
+], name="yellow")
+p2.update_cache()
+p2.fillColor = (255, 255, 125, 255)
+
+p3 = mw._rasterSurface.polygonFactory.create_polygon([
+    Point(50, 50),
+    Point(400, 50),
+    Point(400, 400),
+    Point(50, 400)
+], name="square")
+p3.update_cache()
+p3.fillColor = (255, 75, 10, 255)
+
+mw.polygonsChanged()
 mw.show()
 
 sys.exit(app.exec_())

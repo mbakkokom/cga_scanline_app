@@ -9,9 +9,17 @@ class PolygonHelper(Polygon):
     `PolygonHelper` gives abstractions to the `Polygon` primitive.
     """
 
-    def __init__(self, *args, parent=None):
+    def __init__(self, *args, name: str = "", parent=None):
         super().__init__(*args)
         self.parent = parent
+        self.name = name
+
+        # additional parameters
+        self.fillColor: Tuple[int, int, int, int] = (0, 0, 0, 0)
+        self.outlineEnabled: bool = True
+        self.outlineColor: Tuple[int, int, int, int] = (0, 0, 0, 0)
+        self.outlineThickness: int = 0
+
         # self.update_cache()
 
     @staticmethod
@@ -123,13 +131,17 @@ class PolygonHelper(Polygon):
         self.parent.polygons.remove(self)
         return True
 
+    def __repr__(self) -> str:
+        return "[Polygon \"{}\"]".format(self.name)
+
 
 class PolygonFactory:
     def __init__(self):
         self.polygons: List[PolygonHelper] = list()
 
-    def create_polygon(self, points: List[Point]) -> PolygonHelper:
-        poly = PolygonHelper(*points, parent=self)
+    def create_polygon(self, points: List[Point], name: str = "") \
+            -> PolygonHelper:
+        poly = PolygonHelper(*points, name=name, parent=self)
         self.polygons.append(poly)
         return poly
 
