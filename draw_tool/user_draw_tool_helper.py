@@ -1,20 +1,20 @@
 from typing import Optional
 
 from PyQt5.QtGui import QPainter, QColor, QPen
-from PyQt5.QtCore import pyqtSlot, pyqtSignal, QObject, QEvent, Qt
+from PyQt5.QtCore import pyqtSlot, pyqtSignal, QObject, QPoint, QEvent, Qt
 
 from rasterizer.polygon_factory import PolygonHelper
 from widgets.raster_surface import RasterSurface
 
 
 class UserDrawToolHelper(QObject):
-
-    # This signal is emitted when a polygon
+    polygonDrawStarted = pyqtSignal(PolygonHelper)
     polygonDrawFinished = pyqtSignal(bool, PolygonHelper)
 
     def __init__(self, parent: QObject = None):
         super().__init__(parent)
         self._editingPolygon: Optional[PolygonHelper] = None
+        self._cursorPos = QPoint(0, 0)
 
     def install(self, rasterSurface: RasterSurface) -> None:
         self.rasterSurface = rasterSurface
@@ -65,6 +65,7 @@ class UserDrawToolHelper(QObject):
         self._editingPolygon = PolygonHelper()
         self.rasterSurface.setMouseTracking(True)
         self.rasterSurface.grabKeyboard()
+        self.polygonDrawStarted.emit(self._editingPolygon)
 
     def endEditing(self, savePolygon=True) -> None:
         self.rasterSurface.setMouseTracking(False)

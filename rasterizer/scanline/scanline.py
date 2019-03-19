@@ -124,8 +124,9 @@ def get_raster_lines(
                     elif rs1.edge.end == rs2.edge.end:  # Inverted V shape
                         # print("INVERTED V:", sets)  # TODO remove debugging
                         yield rs1.x, y
-                        # deletes.append(rs1)
-                        # deletes.append(rs2)
+                        yield rs1.x, y
+                        deletes.append(rs1)
+                        deletes.append(rs2)
                     else:
                         # FIXME additional conditionals
                         deletes.append(rs1)
