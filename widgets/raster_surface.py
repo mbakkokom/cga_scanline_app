@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QWidget
-from PyQt5.QtGui import QPainter, QPen, QColor
+from PyQt5.QtGui import QPainter, QPen, QColor, QPaintEvent
 from PyQt5.QtCore import pyqtSignal
 
-from . polygon_factory import PolygonFactory
+from rasterizer.polygon_factory import PolygonFactory
 
 
 class RasterSurface(QWidget):
@@ -22,7 +22,7 @@ class RasterSurface(QWidget):
 
         self.polygonFactory = polygonFactory
 
-    def paintEvent(self, event):
+    def paintEvent(self, event: QPaintEvent):
         height = self.height()
 
         painter = QPainter(self)
