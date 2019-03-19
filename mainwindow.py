@@ -17,6 +17,8 @@ class MainWindow(QMainWindow):
         self.initUI()
         self._polygonList.polygonsChange()
 
+        self._polygonId = 0
+
     def initUI(self) -> None:
         # -- Content
         self._mainSplitter = QSplitter(self)
@@ -78,9 +80,13 @@ class MainWindow(QMainWindow):
             polygon.fillColor = (255, 255, 255, 255)
             polygon.outlineColor = (255, 0, 0, 255)
             polygon.outlineThickness = 3
-            polygon.name = "new"
+            polygon.name = "new{}".format(self._polygonId)
+
+            self._polygonId += 1
 
             polygon.update_cache()
-            self.polygonFactory.add_polygon(polygon)
+            # self.polygonFactory.add_polygon(polygon)
+            self.polygonFactory.polygons.insert(0, polygon)
             self._polygonList.polygonsChange()
-            self._rasterSurface.repaint()
+
+        self._rasterSurface.repaint()

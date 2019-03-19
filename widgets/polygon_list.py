@@ -78,7 +78,8 @@ class PolygonList(QListWidget):
         idx = 0
         for p in self.polygonFactory.polygons:
             itm = QListWidgetItem(p.__repr__(), self)
-            itm.setData(Qt.UserRole, idx)
+            # itm.setData(Qt.UserRole, idx)
+            self.addItem(itm)
             idx += 1
 
     @pyqtSlot(bool)
@@ -114,9 +115,9 @@ class PolygonList(QListWidget):
         cur = self.takeItem(curIndex)
 
         pIndex = curIndex - 1
-        prev = self.item(pIndex)
-        prev.setData(Qt.UserRole, curIndex)
-        cur.setData(Qt.UserRole, pIndex)
+        # prev = self.item(pIndex)
+        # prev.setData(Qt.UserRole, curIndex)
+        # cur.setData(Qt.UserRole, pIndex)
 
         self.insertItem(pIndex, cur)
 
@@ -143,8 +144,8 @@ class PolygonList(QListWidget):
 
         nIndex = curIndex + 1
         prev = self.takeItem(nIndex)
-        prev.setData(Qt.UserRole, curIndex)
-        cur.setData(Qt.UserRole, nIndex)
+        # prev.setData(Qt.UserRole, curIndex)
+        # cur.setData(Qt.UserRole, nIndex)
 
         self.insertItem(curIndex, prev)
 

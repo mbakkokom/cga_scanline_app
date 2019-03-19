@@ -1,6 +1,6 @@
 from typing import Optional
 
-from PyQt5.QtGui import QPainter, QColor
+from PyQt5.QtGui import QPainter, QColor, QPen
 from PyQt5.QtCore import pyqtSlot, pyqtSignal, QObject, QEvent, Qt
 
 from rasterizer.polygon_factory import PolygonHelper
@@ -38,9 +38,19 @@ class UserDrawToolHelper(QObject):
             elif et == QEvent.MouseButtonRelease:
                 np = self._cursorPos
                 if self.rasterSurface.geometry().contains(np):
+                    x = np.x()
+                    y = np.y()
+
+                    if self._editingPolygon.length <= 0:
+                        self._firstPolygonPoint = np
+                    elif abs(x - self._firstPolygonPoint.x()) <= 5 and \
+                            abs(y - self._firstPolygonPoint.y()) < 5:
+                        self.endEditing()  # the last point == first point
+                        return False
+
                     self._editingPolygon.add_point(
-                        np.x(),
-                        self.rasterSurface.height() - np.y()
+                        x,
+                        self.rasterSurface.height() - y
                     )
             elif et == QEvent.KeyRelease:
                 key = event.key()
@@ -73,8 +83,9 @@ class UserDrawToolHelper(QObject):
         pointColor = QColor(75, 125, 255, 255)
         lineColor = QColor(255, 225, 75, 255)
 
-        pen = painter.pen()
+        pen: QPen = painter.pen()
         pen.setColor(lineColor)
+        pen.setWidth(1)
         painter.setPen(pen)
 
         height = self.rasterSurface.height()
@@ -112,4 +123,4 @@ class UserDrawToolHelper(QObject):
             painter.drawLine(prev.x, height - prev.y, p.x(), p.y())
         else:
             p = self._cursorPos  # Qt's QPoint
-            painter.fillRect(p.x() - 5, p.y() - 5, 10, 10, pointColor)       
+            painter.fillRect(p.x() - 5, p.y() - 5, 10, 10, pointColor)
