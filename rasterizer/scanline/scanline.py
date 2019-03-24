@@ -103,13 +103,13 @@ def get_raster_lines(
             deletes = []
 
             i = 0
-            while i < sln:
+            while i < sln:  # iterate every pair of edges in the AEL
                 n = i
                 i += 1
-                nx = i % sln
+                nx = i % sln  # condition for circular list
 
-                rs1 = sets[n]
-                rs2 = sets[nx]
+                rs1 = sets[n]  # n
+                rs2 = sets[nx]  # n + 1
 
                 # FIXME process "single" deletes
                 if rs2 not in deletes and rs2.edge.start.y == y:
@@ -150,6 +150,24 @@ def get_raster_lines(
         sln = len(sets)
         if sln <= 0:
             break
+
+        # Re-Sort AEL based on x values
+        nst: List[RasterState] = []
+        ln = len(sets)
+
+        if ln > 0:
+            nst.append(sets[0])
+
+            for st in sets[1:]:
+                idx = 0
+
+                while idx < len(nst) and nst[idx].x < st.x:
+                    idx += 1
+
+                nst.insert(idx, st)
+
+        sets = nst
+        sln = len(sets)
 
         # 3. draw lines
         for st in sets:
