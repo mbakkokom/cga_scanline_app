@@ -1,14 +1,21 @@
-from PyQt5.QtWidgets import QMainWindow, QWidget, QSplitter, \
-    QVBoxLayout, QHBoxLayout, QPushButton, QColorDialog
-from PyQt5.QtGui import QColor
-from PyQt5.QtCore import pyqtSlot
+from typing import Tuple
 
-from rasterizer.polygon_factory import PolygonHelper, PolygonFactory
+from PyQt5.QtWidgets import QMainWindow, QWidget, QSplitter, \
+    QVBoxLayout, QHBoxLayout, QPushButton, QColorDialog, \
+    QMenu, QAction, QFileDialog
+from PyQt5.QtGui import QColor
+from PyQt5.QtCore import pyqtSlot, Qt, QCoreApplication
+
+from rasterizer.polygon_helper import PolygonHelper
+from rasterizer.polygon_factory import PolygonFactory
 
 from widgets.polygon_list import PolygonList
 from widgets.raster_surface import RasterSurface
+from widgets.error_list_drawer import ErrorListDrawer
 
 from draw_tool.user_draw_tool_helper import UserDrawToolHelper
+
+from fileio import FileIO
 
 
 class MainWindow(QMainWindow):
@@ -25,6 +32,35 @@ class MainWindow(QMainWindow):
         self._polygonId = 0
 
     def initUI(self) -> None:
+        # -- Menu
+        self._menuFile = QMenu("&File", self)
+        self.menuBar().addMenu(self._menuFile)
+
+        self._actionFileNew = QAction("&New", self._menuFile)
+        self._actionFileNew.setShortcut(Qt.CTRL | Qt.Key_N)
+        self._actionFileNew.triggered.connect(self.clearAllObjects)
+
+        self._actionFileOpen = QAction("&Open", self._menuFile)
+        self._actionFileOpen.setShortcut(Qt.CTRL | Qt.Key_O)
+        self._actionFileOpen.triggered.connect(self.fileOpen)
+
+        self._actionFileSaveAs = QAction("&Save As", self._menuFile)
+        self._actionFileSaveAs.setShortcut(Qt.CTRL | Qt.Key_S)
+        self._actionFileSaveAs.triggered.connect(self.fileSaveAs)
+
+        self._actionFileExit = QAction("Quit", self._menuFile)
+        self._actionFileExit.setShortcut(Qt.CTRL | Qt.Key_Q)
+        self._actionFileExit.triggered.connect(self.quitApplication)
+
+        self._menuFile.addAction(self._actionFileNew)
+        self._menuFile.addSeparator()
+        self._menuFile.addActions([
+            self._actionFileOpen,
+            self._actionFileSaveAs
+        ])
+        self._menuFile.addSeparator()
+        self._menuFile.addAction(self._actionFileExit)
+
         # -- Content
         self._mainSplitter = QSplitter(self)
 
@@ -122,18 +158,18 @@ class MainWindow(QMainWindow):
         self._polygonList.polygonsChange()
 
     @pyqtSlot()
-    def createNewPolygon(self):
+    def createNewPolygon(self) -> None:
         self._userDrawToolHelper.beginNewPolygon()
 
     @pyqtSlot()
-    def fillColorChange(self):
+    def fillColorChange(self) -> None:
         self._polygonFillColor = QColorDialog.getColor(
             self._polygonFillColor, self
         )
         self._drawFillColorButton.updateColor()
 
     @pyqtSlot()
-    def outlineColorChange(self):
+    def outlineColorChange(self) -> None:
         self._polygonOutlineColor = QColorDialog.getColor(
             self._polygonOutlineColor, self
         )
@@ -173,3 +209,66 @@ class MainWindow(QMainWindow):
 
         self._drawButtonLayoutWrapper.show()
         self._rasterSurface.repaint()
+
+    @pyqtSlot()
+    def clearAllObjects(self) -> None:
+        self.polygonFactory.clear_polygons()
+        self._polygonList.polygonsChange()
+        self._rasterSurface.repaint()
+
+    @pyqtSlot()
+    def fileOpen(self) -> None:
+        result: Tuple[str, str] = QFileDialog.getOpenFileName(
+            self,
+            "Select file",
+            "",
+            "JSON Files (*.json);;All Files (*.*)"
+        )
+        if len(result) != 2 or len(result[0]) == 0:
+            return
+
+        fn = result[0]
+        print("FILE READ \"{}\"".format(fn))
+
+        hdl = FileIO(self.polygonFactory)
+        _, errs = hdl.readFile(fn)
+
+        errs += self.polygonFactory.update_all_cache()
+
+        self._polygonList.polygonsChange()
+        self._rasterSurface.repaint()
+
+        if len(errs) > 0:
+            ErrorListDrawer(
+                "There were some errors while importing the JSON file:",
+                errs,
+                self
+            ).show()
+
+    @pyqtSlot()
+    def fileSaveAs(self) -> None:
+        result: Tuple[str, str] = QFileDialog.getSaveFileName(
+            self,
+            "Select file",
+            "",
+            "JSON Files (*.json);;All Files (*.*)"
+        )
+        if len(result) != 2 or len(result[0]) == 0:
+            return
+
+        fn = result[0]
+        print("FILE WRITE \"{}\"".format(fn))
+
+        hdl = FileIO(self.polygonFactory)
+        _, err = hdl.writeFile(fn)
+
+        if err is not None:
+            ErrorListDrawer(
+                "There were some errors while exporting the JSON file:",
+                [err],
+                self
+            ).show()
+
+    @pyqtSlot()
+    def quitApplication(self) -> None:
+        QCoreApplication.exit()

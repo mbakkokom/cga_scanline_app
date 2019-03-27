@@ -3,7 +3,7 @@ from typing import Optional
 from PyQt5.QtGui import QPainter, QColor, QPen
 from PyQt5.QtCore import pyqtSlot, pyqtSignal, QObject, QPoint, QEvent, Qt
 
-from rasterizer.polygon_factory import PolygonHelper
+from rasterizer.polygon_helper import PolygonHelper
 from widgets.raster_surface import RasterSurface
 
 
