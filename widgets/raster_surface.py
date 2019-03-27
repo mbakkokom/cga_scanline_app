@@ -1,6 +1,6 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPainter, QPen, QColor, QPaintEvent
-from PyQt5.QtCore import pyqtSignal
+from PyQt5.QtCore import pyqtSignal, QPoint
 
 from rasterizer.polygon_factory import PolygonFactory
 
@@ -34,7 +34,7 @@ class RasterSurface(QWidget):
         self.renderBegin.emit(painter)
 
         for poly in reversed(self.polygonFactory.polygons):
-            if poly.has_cache:
+            if poly.has_cache and len(poly.points) > 0:
                 col = QColor(
                     poly.fillColor[0], poly.fillColor[1],
                     poly.fillColor[2], poly.fillColor[3]
@@ -59,11 +59,9 @@ class RasterSurface(QWidget):
                     pen.setColor(QColor(col[0], col[1], col[2], col[3]))
                     pen.setWidth(poly.outlineThickness)
                     painter.setPen(pen)
-                    for ln in poly.lines_iter():
-                        painter.drawLine(
-                            ln.start.x,
-                            height - ln.start.y,
-                            ln.end.x,
-                            height - ln.end.y)
+
+                    points = [QPoint(i.x, height - i.y) for i in poly.points]
+
+                    painter.drawPolygon(points[0], *points[1:])
 
         self.renderEnd.emit(painter)
