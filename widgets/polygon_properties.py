@@ -21,6 +21,7 @@ class PolygonProperties(QWidget):
 
         # -- Content
         self._mainLayout = QGridLayout(self)
+        self._mainLayout.setContentsMargins(5, 5, 5, 5)
         self.setLayout(self._mainLayout)
 
         self._labelName = QLabel("Name:", self)
@@ -108,10 +109,14 @@ class PolygonProperties(QWidget):
     def setOutlineColor(self, color: QColor) -> None:
         self._buttonOutlineColor.color = color
 
+    def setOutlineThickness(self, thickness: int) -> None:
+        self._sliderOutlineThickness.setValue(thickness)
+
     def updateUI(self) -> None:
         self.setName(self.polygon.name)
         self.setFillColor(QColor(*self.polygon.fillColor))
         self.setOutlineColor(QColor(*self.polygon.outlineColor))
+        self.setOutlineThickness(self.polygon.outlineThickness)
 
     def show(self) -> None:
         self.updateUI()

@@ -1,8 +1,8 @@
 from typing import Tuple
 
 from PyQt5.QtWidgets import QMainWindow, QWidget, QSplitter, \
-    QVBoxLayout, QHBoxLayout, QPushButton, QColorDialog, \
-    QMenu, QAction, QFileDialog
+    QVBoxLayout, QHBoxLayout, QPushButton, QMenu, QAction, QFileDialog, \
+    QSlider
 from PyQt5.QtGui import QColor
 from PyQt5.QtCore import pyqtSlot, Qt, QCoreApplication
 
@@ -11,9 +11,9 @@ from rasterizer.polygon_factory import PolygonFactory
 
 from widgets.polygon_list import PolygonList
 from widgets.raster_surface import RasterSurface
-# from widgets.polygon_properties import PolygonProperties
 from widgets.error_list_drawer import ErrorListDrawer
 from widgets.polygon_data_helper import PolygonDataHelper
+from widgets.color_button import ColorButton
 
 from draw_tool.user_draw_tool_helper import UserDrawToolHelper
 
@@ -28,6 +28,7 @@ class MainWindow(QMainWindow):
 
         self._polygonFillColor = QColor(255, 255, 255, 255)
         self._polygonOutlineColor = QColor(0, 0, 0, 255)
+        self._polygonOutlineThickness = 1
 
         self.initUI()
         self._polygonList.polygonsChange()
@@ -117,41 +118,34 @@ class MainWindow(QMainWindow):
         )
         self._drawBeginButton.clicked.connect(self.createNewPolygon)
 
-        self._drawFillColorButton = QPushButton(self._drawButtonLayoutWrapper)
-        self._drawFillColorButton.setFixedWidth(35)
-        self._drawFillColorButton.updateColor = lambda: \
-            self._drawFillColorButton.setStyleSheet(
-                "QPushButton {{ background-color: rgba({}, {}, {}, {}) }}".
-                format(
-                    self._polygonFillColor.red(),
-                    self._polygonFillColor.green(),
-                    self._polygonFillColor.blue(),
-                    self._polygonFillColor.alpha()
-                )
-            )
-        self._drawFillColorButton.updateColor()
-        self._drawFillColorButton.clicked.connect(self.fillColorChange)
-
-        self._drawOutlineColorButton = QPushButton(
-            self._drawButtonLayoutWrapper
+        self._drawFillColorButton = ColorButton(
+            self._drawButtonLayoutWrapper,
+            self._polygonFillColor
         )
-        self._drawOutlineColorButton.setFixedWidth(35)
-        self._drawOutlineColorButton.updateColor = lambda: \
-            self._drawOutlineColorButton.setStyleSheet(
-                "QPushButton {{ background-color: rgba({}, {}, {}, {}) }}".
-                format(
-                    self._polygonOutlineColor.red(),
-                    self._polygonOutlineColor.green(),
-                    self._polygonOutlineColor.blue(),
-                    self._polygonOutlineColor.alpha()
-                )
-            )
-        self._drawOutlineColorButton.updateColor()
-        self._drawOutlineColorButton.clicked.connect(self.outlineColorChange)
+        self._drawFillColorButton.colorChanged.connect(self.fillColorChange)
+
+        self._drawOutlineColorButton = ColorButton(
+            self._drawButtonLayoutWrapper,
+            self._polygonOutlineColor
+        )
+        self._drawOutlineColorButton.colorChanged.connect(
+            self.outlineColorChange
+        )
+
+        self._drawOutlineThicknessSlider = QSlider(Qt.Horizontal, self)
+        self._drawOutlineThicknessSlider.setMinimum(0)
+        self._drawOutlineThicknessSlider.setMaximum(20)
+        self._drawOutlineThicknessSlider.setValue(
+            self._polygonOutlineThickness
+        )
+        self._drawOutlineThicknessSlider.valueChanged.connect(
+            self.outlineThicknessChanged
+        )
 
         self._drawButtonLayout.addWidget(self._drawBeginButton)
         self._drawButtonLayout.addWidget(self._drawFillColorButton)
         self._drawButtonLayout.addWidget(self._drawOutlineColorButton)
+        self._drawButtonLayout.addWidget(self._drawOutlineThicknessSlider)
 
         # Packing
         self.setCentralWidget(self._mainSplitter)
@@ -164,19 +158,17 @@ class MainWindow(QMainWindow):
     def createNewPolygon(self) -> None:
         self._userDrawToolHelper.beginNewPolygon()
 
-    @pyqtSlot()
-    def fillColorChange(self) -> None:
-        self._polygonFillColor = QColorDialog.getColor(
-            self._polygonFillColor, self
-        )
-        self._drawFillColorButton.updateColor()
+    @pyqtSlot(QColor)
+    def fillColorChange(self, color: QColor) -> None:
+        self._polygonFillColor = QColor(color)
 
-    @pyqtSlot()
-    def outlineColorChange(self) -> None:
-        self._polygonOutlineColor = QColorDialog.getColor(
-            self._polygonOutlineColor, self
-        )
-        self._drawOutlineColorButton.updateColor()
+    @pyqtSlot(QColor)
+    def outlineColorChange(self, color: QColor) -> None:
+        self._polygonOutlineColor = QColor(color)
+
+    @pyqtSlot(int)
+    def outlineThicknessChanged(self, thickness: int) -> None:
+        self._polygonOutlineThickness = thickness
 
     @pyqtSlot(PolygonHelper)
     def userStartedDrawing(self, polygon: PolygonHelper) -> None:
@@ -200,7 +192,7 @@ class MainWindow(QMainWindow):
                 self._polygonOutlineColor.blue(),
                 self._polygonOutlineColor.alpha()
             )
-            polygon.outlineThickness = 3
+            polygon.outlineThickness = self._polygonOutlineThickness
             polygon.name = "new{}".format(self._polygonId)
 
             self._polygonId += 1

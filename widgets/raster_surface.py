@@ -34,29 +34,27 @@ class RasterSurface(QWidget):
         self.renderBegin.emit(painter)
 
         for poly in reversed(self.polygonFactory):
-            if poly.has_cache and len(poly.points) > 0:
-                col = QColor(
-                    poly.fillColor[0], poly.fillColor[1],
-                    poly.fillColor[2], poly.fillColor[3]
-                )
-
-                for y, x1, x2 in poly.cachedLines:
-                    y = height - y
-
+            if len(poly.points) > 0:
+                r, g, b, a = poly.fillColor
+                if poly.has_cache and a != 0:
+                    col = QColor(r, g, b, a)
                     pen.setColor(blockColor)
                     painter.setPen(pen)
 
-                    painter.fillRect(
-                        x1,
-                        y,
-                        x2 - x1,
-                        1,
-                        col
-                    )
+                    for y, x1, x2 in poly.cachedLines:
+                        y = height - y
 
-                if poly.outlineThickness > 0:
-                    col = poly.outlineColor
-                    pen.setColor(QColor(col[0], col[1], col[2], col[3]))
+                        painter.fillRect(
+                            x1,
+                            y,
+                            x2 - x1,
+                            1,
+                            col
+                        )
+
+                r, g, b, a = poly.outlineColor
+                if poly.outlineThickness > 0 and a != 0:
+                    pen.setColor(QColor(r, g, b, a))
                     pen.setWidth(poly.outlineThickness)
                     painter.setPen(pen)
 

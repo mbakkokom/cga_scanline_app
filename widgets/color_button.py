@@ -38,8 +38,10 @@ class ColorButton(QPushButton):
 
     @pyqtSlot()
     def click(self):
-        self.color = QColorDialog.getColor(
-            self._color, self
+        col = QColorDialog.getColor(
+            self._color, self, "", QColorDialog.ShowAlphaChannel
         )
 
-        self.colorChanged.emit(self._color)
+        if col.isValid():
+            self.color = col
+            self.colorChanged.emit(self._color)
