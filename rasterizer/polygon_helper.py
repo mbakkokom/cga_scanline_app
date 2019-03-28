@@ -137,7 +137,7 @@ class PolygonHelper(Polygon):
         if self.parent is None:
             return False
 
-        self.parent.polygons.remove(self)
+        self.parent.remove(self)
         return True
 
     def __repr__(self) -> str:

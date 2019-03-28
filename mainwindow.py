@@ -11,7 +11,9 @@ from rasterizer.polygon_factory import PolygonFactory
 
 from widgets.polygon_list import PolygonList
 from widgets.raster_surface import RasterSurface
+# from widgets.polygon_properties import PolygonProperties
 from widgets.error_list_drawer import ErrorListDrawer
+from widgets.polygon_data_helper import PolygonDataHelper
 
 from draw_tool.user_draw_tool_helper import UserDrawToolHelper
 
@@ -22,6 +24,7 @@ class MainWindow(QMainWindow):
     def __init__(self, parent: QWidget = None):
         super().__init__(parent)
         self.polygonFactory = PolygonFactory()
+        self.polygonDataHelper = PolygonDataHelper(self, self.polygonFactory)
 
         self._polygonFillColor = QColor(255, 255, 255, 255)
         self._polygonOutlineColor = QColor(0, 0, 0, 255)
@@ -91,8 +94,8 @@ class MainWindow(QMainWindow):
         self._mainSplitter.addWidget(self._rightPaneLayoutWrapper)
 
         self._polygonList = PolygonList(
-            parent=self,
-            polygonFactory=self.polygonFactory
+            self.polygonDataHelper,
+            parent=self
         )
         # FIXME workaround for dark theme
         self._polygonList.setStyleSheet(
@@ -204,7 +207,7 @@ class MainWindow(QMainWindow):
 
             polygon.update_cache()
             # self.polygonFactory.add_polygon(polygon)
-            self.polygonFactory.polygons.insert(0, polygon)
+            self.polygonDataHelper.insertPolygon(0, polygon)
             self._polygonList.polygonsChange()
 
         self._drawButtonLayoutWrapper.show()
@@ -212,7 +215,7 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def clearAllObjects(self) -> None:
-        self.polygonFactory.clear_polygons()
+        self.polygonDataHelper.clearAll()
         self._polygonList.polygonsChange()
         self._rasterSurface.repaint()
 
@@ -230,10 +233,14 @@ class MainWindow(QMainWindow):
         fn = result[0]
         print("FILE READ \"{}\"".format(fn))
 
+        self.polygonDataHelper.clearAll()
+
         hdl = FileIO(self.polygonFactory)
         _, errs = hdl.readFile(fn)
 
-        errs += self.polygonFactory.update_all_cache()
+        errs += self.polygonDataHelper.updateAllPolygonCache()
+
+        self.polygonDataHelper.generateMapping()
 
         self._polygonList.polygonsChange()
         self._rasterSurface.repaint()

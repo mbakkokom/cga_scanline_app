@@ -2,16 +2,21 @@ from PyQt5.QtWidgets import QWidget, QListWidget, QListWidgetItem, QMenu, \
                             QAction
 from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QPoint
 
-from rasterizer.polygon_factory import PolygonFactory
+from rasterizer.polygon_helper import PolygonHelper
+
+from widgets.polygon_data_helper import PolygonDataHelper
 
 
 class PolygonList(QListWidget):
     polygonsChanged = pyqtSignal()
 
-    def __init__(self, polygonFactory: PolygonFactory = None,
+    def __init__(self, polygonDataHelper: PolygonDataHelper,
                  parent: QWidget = None):
         super().__init__(parent)
-        self.polygonFactory = polygonFactory
+        self.polygonDataHelper = polygonDataHelper
+        self.polygonDataHelper.polygonChanged.connect(
+            self.polygonPropertyChange
+        )
 
         self.initUI()
 
@@ -53,6 +58,8 @@ class PolygonList(QListWidget):
             self._contextMenuMoveDown
         ])
 
+        self.itemDoubleClicked.connect(self.showItemProperties)
+
     @pyqtSlot(QPoint)
     def customContextMenu(self, pos: QPoint):
         itm = self.itemAt(pos)
@@ -71,12 +78,20 @@ class PolygonList(QListWidget):
             ln_ok and sels[-1].row() < self.model().rowCount() - 1
         )
 
+    @pyqtSlot(PolygonHelper, bool)
+    def polygonPropertyChange(self, poly: PolygonHelper, needRedraw: bool) \
+            -> None:
+        if needRedraw:
+            self.polygonsChanged.emit()
+        else:
+            self.polygonsChange()
+
     @pyqtSlot()
     def polygonsChange(self) -> None:
         self.clear()
 
         idx = 0
-        for p in self.polygonFactory.polygons:
+        for p in self.polygonDataHelper.polygonFactory:
             itm = QListWidgetItem(p.__repr__(), self)
             # itm.setData(Qt.UserRole, idx)
             self.addItem(itm)
@@ -90,11 +105,11 @@ class PolygonList(QListWidget):
             idx = self.row(i)
             row = self.takeItem(idx)
             # idx = int(row.data(Qt.UserRole))
-            deletes.append(self.polygonFactory.polygons[idx])
+            deletes.append(self.polygonDataHelper.polygonFactory[idx])
             del(row)
 
         for i in deletes:
-            self.polygonFactory.polygons.remove(i)
+            self.polygonDataHelper.removePolygon(i)
 
         self.polygonsChanged.emit()
         # self.polygonsChange()
@@ -121,7 +136,7 @@ class PolygonList(QListWidget):
 
         self.insertItem(pIndex, cur)
 
-        arr = self.polygonFactory.polygons
+        arr = self.polygonDataHelper.polygonFactory
         arr.insert(pIndex, arr.pop(curIndex))
 
         self.setCurrentRow(pIndex)
@@ -149,10 +164,19 @@ class PolygonList(QListWidget):
 
         self.insertItem(curIndex, prev)
 
-        arr = self.polygonFactory.polygons
+        arr = self.polygonDataHelper.polygonFactory
         arr.insert(curIndex, arr.pop(nIndex))
 
         self.setCurrentRow(nIndex)
 
         self.polygonsChanged.emit()
         # self.polygonsChange()
+
+    @pyqtSlot(QListWidgetItem)
+    def showItemProperties(self, item: QListWidgetItem):
+        dlg = self.polygonDataHelper.getPropertiesWindowByIndex(
+            self.row(item)
+        )
+
+        if dlg is not None:
+            dlg.show()

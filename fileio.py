@@ -135,8 +135,6 @@ class FileIO:
         ret = True
         exc = []
 
-        self.polygonFactory.clear_polygons()
-
         try:
             with open(fn, 'r') as fp:
                 obj = json.load(fp)
@@ -154,7 +152,7 @@ class FileIO:
 
                 for poly in obj["objects"]:
                     try:
-                        self.polygonFactory.add_polygon(
+                        self.polygonFactory.append(
                             FileIO.createPolygonHelperFromObject(poly)
                         )
                     except Exception as ex:
@@ -183,7 +181,7 @@ class FileIO:
                         "version": "1.0",
                         "objects": [
                             FileIO.createObjectFromPolygonHelper(i)
-                            for i in self.polygonFactory.polygons
+                            for i in self.polygonFactory
                         ]
                     },
                     fp

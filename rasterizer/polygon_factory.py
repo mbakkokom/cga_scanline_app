@@ -1,32 +1,29 @@
-from typing import Tuple, List, Optional
+from typing import List, Optional
 
 from primitives import Point
 from . polygon_helper import PolygonHelper
 
 
-class PolygonFactory:
+class PolygonFactory(list):
     def __init__(self):
-        self.polygons: List[PolygonHelper] = list()
+        super().__init__()
 
-    def create_polygon(self, points: List[Point], name: str = "") \
+    def create(self, points: List[Point], name: str = "") \
             -> PolygonHelper:
         poly = PolygonHelper(*points, name=name, parent=self)
-        self.polygons.append(poly)
+        self.append(poly)
         return poly
 
-    def add_polygon(self, p: PolygonHelper) -> None:
-        self.polygons.append(p)
-
-    def get_polygon(self, idx: int) -> Optional[PolygonHelper]:
-        if idx >= len(self.polygons):
+    def get(self, idx: int) -> Optional[PolygonHelper]:
+        if idx >= len(self):
             return None
         else:
-            return self.polygons[idx]
+            return self[idx]
 
     def update_all_cache(self) -> List[Exception]:
         errors = []
 
-        for p in self.polygons:
+        for p in self:
             try:
                 p.update_cache()
             except Exception as ex:
@@ -34,8 +31,5 @@ class PolygonFactory:
 
         return errors
 
-    def delete_polygon(self, idx: int) -> None:
+    def removeByIndex(self, idx: int) -> None:
         del self.polygons[idx]
-
-    def clear_polygons(self) -> None:
-        self.polygons.clear()

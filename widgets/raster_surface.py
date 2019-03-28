@@ -33,7 +33,7 @@ class RasterSurface(QWidget):
 
         self.renderBegin.emit(painter)
 
-        for poly in reversed(self.polygonFactory.polygons):
+        for poly in reversed(self.polygonFactory):
             if poly.has_cache and len(poly.points) > 0:
                 col = QColor(
                     poly.fillColor[0], poly.fillColor[1],

@@ -73,7 +73,7 @@ class UserDrawToolHelper(QObject):
         poly = self._editingPolygon
         self._editingPolygon = None
         self.polygonDrawFinished.emit(
-            savePolygon, poly
+            savePolygon and len(poly.points) >= 3, poly
         )
 
     @pyqtSlot(QPainter)
