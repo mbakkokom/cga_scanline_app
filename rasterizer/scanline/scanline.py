@@ -143,31 +143,22 @@ def get_raster_lines(
         # 2. insert new edges from SET
         if bln > 0 and y == bucket_idx[0]:
             bucket_idx.pop(0)
-            sets += bucket_val.pop(0)
+            newset = bucket_val.pop(0)
+
+            for st in newset:
+                idx = 0
+
+                while idx < len(sets) and sets[idx].x < st.x:
+                    idx += 1
+
+                sets.insert(idx, st)
+
             bln = len(bucket_idx)
 
         # FIXME ??
         sln = len(sets)
         if sln <= 0:
             break
-
-        # Re-Sort AEL based on x values
-        nst: List[RasterState] = []
-        ln = len(sets)
-
-        if ln > 0:
-            nst.append(sets[0])
-
-            for st in sets[1:]:
-                idx = 0
-
-                while idx < len(nst) and nst[idx].x < st.x:
-                    idx += 1
-
-                nst.insert(idx, st)
-
-        sets = nst
-        sln = len(sets)
 
         # 3. draw lines
         for st in sets:
