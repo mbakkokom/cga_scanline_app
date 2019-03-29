@@ -4,11 +4,12 @@ from PyQt5.QtCore import Qt, pyqtSlot, pyqtSignal, QPoint
 
 from rasterizer.polygon_helper import PolygonHelper
 
-from widgets.polygon_data_helper import PolygonDataHelper
+from helpers.polygon_data_helper import PolygonDataHelper
 
 
 class PolygonList(QListWidget):
     polygonsChanged = pyqtSignal()
+    polygonEditingRequested = pyqtSignal(PolygonHelper)
 
     def __init__(self, polygonDataHelper: PolygonDataHelper,
                  parent: QWidget = None):
@@ -29,6 +30,18 @@ class PolygonList(QListWidget):
         # -- context menu
         self._contextMenu = QMenu(self)
 
+        self._contextMenuInspect = QAction("In&spect", self)
+        self._contextMenuInspect.setEnabled(False)
+        self._contextMenuInspect.triggered.connect(
+            self.inspectSelectedPolygons
+        )
+
+        self._contextMenuEdit = QAction("&Edit", self)
+        self._contextMenuEdit.setEnabled(False)
+        self._contextMenuEdit.triggered.connect(
+            self.editSelectedPolygons
+        )
+
         self._contextMenuDelete = QAction("&Delete", self)
         self._contextMenuDelete.setEnabled(False)
         self._contextMenuDelete.setShortcut(Qt.Key_Backspace)  # OS binding?
@@ -47,12 +60,16 @@ class PolygonList(QListWidget):
         )
 
         self._contextMenu.addActions([
+            self._contextMenuInspect,
+            self._contextMenuEdit,
             self._contextMenuDelete,
             self._contextMenuMoveUp,
             self._contextMenuMoveDown
         ])
 
         self.addActions([
+            self._contextMenuInspect,
+            self._contextMenuEdit,
             self._contextMenuDelete,
             self._contextMenuMoveUp,
             self._contextMenuMoveDown
@@ -72,6 +89,8 @@ class PolygonList(QListWidget):
         # FIXME cannot move up after have gone up and down again.
         sels = self.selectedIndexes()
         ln_ok = len(sels) > 0
+        self._contextMenuInspect.setEnabled(ln_ok)
+        self._contextMenuEdit.setEnabled(ln_ok)
         self._contextMenuDelete.setEnabled(ln_ok)
         self._contextMenuMoveUp.setEnabled(ln_ok and sels[0].row() > 0)
         self._contextMenuMoveDown.setEnabled(
@@ -96,6 +115,25 @@ class PolygonList(QListWidget):
             # itm.setData(Qt.UserRole, idx)
             self.addItem(itm)
             idx += 1
+
+    @pyqtSlot(bool)
+    def inspectSelectedPolygons(self, checked: bool):
+        for itm in self.selectedItems():
+            self.showItemProperties(itm)
+
+    @pyqtSlot(bool)
+    def editSelectedPolygons(self, checked: bool):
+        selectedItems = self.selectedItems()
+
+        if len(selectedItems) != 1:
+            return
+
+        idx = self.row(selectedItems[0])
+
+        if idx >= 0:
+            poly = self.polygonDataHelper.getPolygon(idx)
+            if poly is not None:
+                self.polygonEditingRequested.emit(poly)
 
     @pyqtSlot(bool)
     def deleteSelectedPolygons(self, checked: bool) -> None:
@@ -180,3 +218,4 @@ class PolygonList(QListWidget):
 
         if dlg is not None:
             dlg.show()
+            dlg.setFocus()

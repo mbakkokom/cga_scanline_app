@@ -47,7 +47,7 @@ class PolygonDataHelper(QObject):
         self.createMappingFor(poly)
 
     def getPolygon(self, idx: int) -> Optional[PolygonHelper]:
-        self.polygonFactory.get(idx)
+        return self.polygonFactory.get(idx)
 
     def updateAllPolygonCache(self) -> List[Exception]:
         return self.polygonFactory.update_all_cache()

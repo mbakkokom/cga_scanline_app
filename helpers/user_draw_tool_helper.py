@@ -66,6 +66,7 @@ class UserDrawToolHelper(QObject):
         self.rasterSurface.setMouseTracking(True)
         self.rasterSurface.grabKeyboard()
         self.polygonDrawStarted.emit(self._editingPolygon)
+        self.rasterSurface.repaint()
 
     def endEditing(self, savePolygon=True) -> None:
         self.rasterSurface.setMouseTracking(False)

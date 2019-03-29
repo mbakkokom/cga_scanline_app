@@ -1,9 +1,7 @@
 from typing import Tuple
 
 from PyQt5.QtWidgets import QMainWindow, QWidget, QSplitter, \
-    QVBoxLayout, QHBoxLayout, QPushButton, QMenu, QAction, QFileDialog, \
-    QSlider
-from PyQt5.QtGui import QColor
+    QVBoxLayout, QMenu, QAction, QFileDialog
 from PyQt5.QtCore import pyqtSlot, Qt, QCoreApplication
 
 from rasterizer.polygon_helper import PolygonHelper
@@ -12,10 +10,12 @@ from rasterizer.polygon_factory import PolygonFactory
 from widgets.polygon_list import PolygonList
 from widgets.raster_surface import RasterSurface
 from widgets.error_list_drawer import ErrorListDrawer
-from widgets.polygon_data_helper import PolygonDataHelper
-from widgets.color_button import ColorButton
+from widgets.user_draw_panel import UserDrawPanel
+from widgets.user_edit_panel import UserEditPanel
 
-from draw_tool.user_draw_tool_helper import UserDrawToolHelper
+from helpers.polygon_data_helper import PolygonDataHelper
+from helpers.user_draw_tool_helper import UserDrawToolHelper
+from helpers.user_edit_tool_helper import UserEditToolHelper
 
 from fileio import FileIO
 
@@ -25,10 +25,6 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.polygonFactory = PolygonFactory()
         self.polygonDataHelper = PolygonDataHelper(self, self.polygonFactory)
-
-        self._polygonFillColor = QColor(255, 255, 255, 255)
-        self._polygonOutlineColor = QColor(0, 0, 0, 255)
-        self._polygonOutlineThickness = 1
 
         self.initUI()
         self._polygonList.polygonsChange()
@@ -76,12 +72,32 @@ class MainWindow(QMainWindow):
 
         self._userDrawToolHelper = UserDrawToolHelper(self)
         self._userDrawToolHelper.install(self._rasterSurface)
-        self._userDrawToolHelper.polygonDrawFinished.connect(
-            self.userFinishedDrawing
-        )
         self._userDrawToolHelper.polygonDrawStarted.connect(
             self.userStartedDrawing
         )
+        self._userDrawToolHelper.polygonDrawFinished.connect(
+            self.userFinishedDrawing
+        )
+
+        self._userDrawToolPanel = UserDrawPanel(
+            self._userDrawToolHelper,
+            self._rasterSurface
+        )
+
+        self._userEditToolHelper = UserEditToolHelper(self)
+        self._userEditToolHelper.install(self._rasterSurface)
+        self._userEditToolHelper.polygonEditStarted.connect(
+            self.userStartedEditing
+        )
+        self._userEditToolHelper.polygonEditFinished.connect(
+            self.userFinishedEditing
+        )
+
+        self._userEditToolPanel = UserEditPanel(
+            self._userEditToolHelper,
+            self._rasterSurface
+        )
+        self._userEditToolPanel.hide()
 
         self._mainSplitter.addWidget(self._rasterSurface)
 
@@ -103,49 +119,10 @@ class MainWindow(QMainWindow):
             "QListWidget { background-color: black; color: white }"
         )
         self._polygonList.polygonsChanged.connect(self._rasterSurface.repaint)
+        self._polygonList.polygonEditingRequested.connect(
+            self.beginPolygonEditing
+        )
         self._rightPaneLayout.addWidget(self._polygonList)
-
-        # Draw pane
-        self._drawButtonLayoutWrapper = QWidget(self._rasterSurface)
-        self._drawButtonLayoutWrapper.setContentsMargins(0, 0, 0, 0)
-
-        self._drawButtonLayout = QHBoxLayout(self._drawButtonLayoutWrapper)
-        self._drawButtonLayout.setContentsMargins(0, 0, 0, 0)
-        self._drawButtonLayoutWrapper.setLayout(self._drawButtonLayout)
-
-        self._drawBeginButton = QPushButton(
-            "Draw", self._drawButtonLayoutWrapper
-        )
-        self._drawBeginButton.clicked.connect(self.createNewPolygon)
-
-        self._drawFillColorButton = ColorButton(
-            self._drawButtonLayoutWrapper,
-            self._polygonFillColor
-        )
-        self._drawFillColorButton.colorChanged.connect(self.fillColorChange)
-
-        self._drawOutlineColorButton = ColorButton(
-            self._drawButtonLayoutWrapper,
-            self._polygonOutlineColor
-        )
-        self._drawOutlineColorButton.colorChanged.connect(
-            self.outlineColorChange
-        )
-
-        self._drawOutlineThicknessSlider = QSlider(Qt.Horizontal, self)
-        self._drawOutlineThicknessSlider.setMinimum(0)
-        self._drawOutlineThicknessSlider.setMaximum(20)
-        self._drawOutlineThicknessSlider.setValue(
-            self._polygonOutlineThickness
-        )
-        self._drawOutlineThicknessSlider.valueChanged.connect(
-            self.outlineThicknessChanged
-        )
-
-        self._drawButtonLayout.addWidget(self._drawBeginButton)
-        self._drawButtonLayout.addWidget(self._drawFillColorButton)
-        self._drawButtonLayout.addWidget(self._drawOutlineColorButton)
-        self._drawButtonLayout.addWidget(self._drawOutlineThicknessSlider)
 
         # Packing
         self.setCentralWidget(self._mainSplitter)
@@ -154,25 +131,10 @@ class MainWindow(QMainWindow):
     def polygonsChanged(self) -> None:
         self._polygonList.polygonsChange()
 
-    @pyqtSlot()
-    def createNewPolygon(self) -> None:
-        self._userDrawToolHelper.beginNewPolygon()
-
-    @pyqtSlot(QColor)
-    def fillColorChange(self, color: QColor) -> None:
-        self._polygonFillColor = QColor(color)
-
-    @pyqtSlot(QColor)
-    def outlineColorChange(self, color: QColor) -> None:
-        self._polygonOutlineColor = QColor(color)
-
-    @pyqtSlot(int)
-    def outlineThicknessChanged(self, thickness: int) -> None:
-        self._polygonOutlineThickness = thickness
-
     @pyqtSlot(PolygonHelper)
     def userStartedDrawing(self, polygon: PolygonHelper) -> None:
-        self._drawButtonLayoutWrapper.hide()
+        self._userDrawToolPanel.hide()
+        self._polygonList.setEnabled(False)
 
     @pyqtSlot(bool, PolygonHelper)
     def userFinishedDrawing(self,
@@ -181,18 +143,18 @@ class MainWindow(QMainWindow):
         if confirm is True:
             # TODO default properties
             polygon.fillColor = (
-                self._polygonFillColor.red(),
-                self._polygonFillColor.green(),
-                self._polygonFillColor.blue(),
-                self._polygonFillColor.alpha()
+                self._userDrawToolPanel.fillColor.red(),
+                self._userDrawToolPanel.fillColor.green(),
+                self._userDrawToolPanel.fillColor.blue(),
+                self._userDrawToolPanel.fillColor.alpha()
             )
             polygon.outlineColor = (
-                self._polygonOutlineColor.red(),
-                self._polygonOutlineColor.green(),
-                self._polygonOutlineColor.blue(),
-                self._polygonOutlineColor.alpha()
+                self._userDrawToolPanel.outlineColor.red(),
+                self._userDrawToolPanel.outlineColor.green(),
+                self._userDrawToolPanel.outlineColor.blue(),
+                self._userDrawToolPanel.outlineColor.alpha()
             )
-            polygon.outlineThickness = self._polygonOutlineThickness
+            polygon.outlineThickness = self._userDrawToolPanel.outlineThickness
             polygon.name = "new{}".format(self._polygonId)
 
             self._polygonId += 1
@@ -202,8 +164,28 @@ class MainWindow(QMainWindow):
             self.polygonDataHelper.insertPolygon(0, polygon)
             self._polygonList.polygonsChange()
 
-        self._drawButtonLayoutWrapper.show()
+        self._userDrawToolPanel.show()
+        self._polygonList.setEnabled(True)
         self._rasterSurface.repaint()
+
+    @pyqtSlot(PolygonHelper)
+    def beginPolygonEditing(self, polygon: PolygonHelper) -> None:
+        self._userEditToolHelper.beginEditPolygon(polygon)
+
+    @pyqtSlot(PolygonHelper)
+    def userStartedEditing(self, polygon: PolygonHelper) -> None:
+        self._userDrawToolPanel.hide()
+        self._polygonList.setEnabled(False)
+        self._userEditToolPanel.show()
+
+    @pyqtSlot(bool, PolygonHelper)
+    def userFinishedEditing(self,
+                            confirm: bool,
+                            polygon: PolygonHelper) -> None:
+        self._rasterSurface.repaint()
+        self._userDrawToolPanel.show()
+        self._polygonList.setEnabled(True)
+        self._userEditToolPanel.hide()
 
     @pyqtSlot()
     def clearAllObjects(self) -> None:

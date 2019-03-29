@@ -15,7 +15,7 @@ class PolygonFactory(list):
         return poly
 
     def get(self, idx: int) -> Optional[PolygonHelper]:
-        if idx >= len(self):
+        if idx > len(self):
             return None
         else:
             return self[idx]
