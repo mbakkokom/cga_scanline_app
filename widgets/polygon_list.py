@@ -28,7 +28,7 @@ class PolygonList(QListWidget):
         self.itemSelectionChanged.connect(self.itemSelectionChange)
 
         # -- context menu
-        self._contextMenu = QMenu(self)
+        self.contextMenu = QMenu("&Edit", self)
 
         self._contextMenuInspect = QAction("In&spect", self)
         self._contextMenuInspect.setEnabled(False)
@@ -36,33 +36,42 @@ class PolygonList(QListWidget):
             self.inspectSelectedPolygons
         )
 
-        self._contextMenuEdit = QAction("&Edit", self)
+        self._contextMenuEdit = QAction("&Edit Polygon", self)
         self._contextMenuEdit.setEnabled(False)
+        self._contextMenuEdit.setShortcut(Qt.Key_Tab)
+        self._contextMenuEdit.setShortcutVisibleInContextMenu(True)
         self._contextMenuEdit.triggered.connect(
             self.editSelectedPolygons
         )
 
         self._contextMenuDelete = QAction("&Delete", self)
         self._contextMenuDelete.setEnabled(False)
-        self._contextMenuDelete.setShortcut(Qt.Key_Backspace)  # OS binding?
+        self._contextMenuDelete.setShortcut(Qt.Key_Delete)  # OS binding?
+        self._contextMenuDelete.setShortcutVisibleInContextMenu(True)
         self._contextMenuDelete.triggered.connect(self.deleteSelectedPolygons)
 
         self._contextMenuMoveUp = QAction("Move &Up", self)
         self._contextMenuMoveUp.setEnabled(False)
         self._contextMenuMoveUp.setShortcut(Qt.CTRL | Qt.Key_Up)
+        self._contextMenuMoveUp.setShortcutVisibleInContextMenu(True)
         self._contextMenuMoveUp.triggered.connect(self.moveUpSelectedPolygons)
 
         self._contextMenuMoveDown = QAction("Move &Down", self)
         self._contextMenuMoveDown.setEnabled(False)
         self._contextMenuMoveDown.setShortcut(Qt.CTRL | Qt.Key_Down)
+        self._contextMenuMoveDown.setShortcutVisibleInContextMenu(True)
         self._contextMenuMoveDown.triggered.connect(
             self.moveDownSelectedPolygons
         )
 
-        self._contextMenu.addActions([
-            self._contextMenuInspect,
+        self.contextMenu.addAction(self._contextMenuInspect)
+        self.contextMenu.addSeparator()
+        self.contextMenu.addActions([
             self._contextMenuEdit,
-            self._contextMenuDelete,
+            self._contextMenuDelete
+        ])
+        self.contextMenu.addSeparator()
+        self.contextMenu.addActions([
             self._contextMenuMoveUp,
             self._contextMenuMoveDown
         ])
@@ -82,7 +91,7 @@ class PolygonList(QListWidget):
         itm = self.itemAt(pos)
         if itm is not None:
             self.itemSelectionChange()
-            self._contextMenu.exec(self.mapToGlobal(pos))
+            self.contextMenu.exec(self.mapToGlobal(pos))
 
     @pyqtSlot()
     def itemSelectionChange(self) -> None:

@@ -29,7 +29,7 @@ class UserDrawPanel(QWidget):
         self.setLayout(self._drawButtonLayout)
 
         self._drawBeginButton = QPushButton(
-            "Draw", self
+            "New Polygon", self
         )
         self._drawBeginButton.clicked.connect(self.createNewPolygon)
 

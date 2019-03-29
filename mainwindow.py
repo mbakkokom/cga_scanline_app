@@ -114,7 +114,7 @@ class MainWindow(QMainWindow):
             self.polygonDataHelper,
             parent=self
         )
-        # FIXME workaround for dark theme
+        # FIXME workaround for macOS dark theme
         self._polygonList.setStyleSheet(
             "QListWidget { background-color: black; color: white }"
         )
@@ -123,6 +123,7 @@ class MainWindow(QMainWindow):
             self.beginPolygonEditing
         )
         self._rightPaneLayout.addWidget(self._polygonList)
+        self.menuBar().addMenu(self._polygonList.contextMenu)
 
         # Packing
         self.setCentralWidget(self._mainSplitter)

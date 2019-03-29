@@ -17,7 +17,7 @@ class UserEditPanel(QWidget):
         self.setLayout(self.buttonLayout)
 
         self.newPointButton = QPushButton(
-            "New", self
+            "New Point", self
         )
         self.newPointButton.clicked.connect(
             self.editHelper.userRequestNewPoint

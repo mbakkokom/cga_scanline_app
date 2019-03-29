@@ -71,6 +71,10 @@ class UserEditToolHelper(QObject):
         return False
 
     def beginEditPolygon(self, targetShape: PolygonHelper) -> None:
+        # reset states
+        self._highlightedPoint = None
+        self._highlightedPointActive = False
+
         self._editingPolygon = targetShape
         self._originalPoints = [
             Point.from_point(p) for p in targetShape.points
