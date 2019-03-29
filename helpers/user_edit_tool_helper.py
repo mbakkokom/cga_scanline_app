@@ -125,7 +125,8 @@ class UserEditToolHelper(QObject):
 
     @pyqtSlot()
     def userRequestDeletePoint(self) -> bool:
-        if self._highlightedPoint is not None:
+        if self._highlightedPoint is not None and \
+           self._editingPolygon.length > 3:
             self._editingPolygon.points.remove(self._highlightedPoint)
             self._editingPolygon.update_cache()
             self._highlightedPoint = None
