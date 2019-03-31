@@ -139,11 +139,17 @@ class PolygonList(QListWidget):
 
     @pyqtSlot(bool)
     def inspectSelectedPolygons(self, checked: bool) -> None:
+        if not self.contextMenu.isEnabled():
+            return
+
         for itm in self.selectedItems():
             self.showItemProperties(itm)
 
     @pyqtSlot(bool)
     def editSelectedPolygons(self, checked: bool) -> None:
+        if not self.contextMenu.isEnabled():
+            return
+
         selectedItems = self.selectedItems()
 
         if len(selectedItems) != 1:
@@ -158,6 +164,9 @@ class PolygonList(QListWidget):
 
     @pyqtSlot(bool)
     def transformSelectedPolygons(self, checked: bool) -> None:
+        if not self.contextMenu.isEnabled():
+            return
+
         selectedItems = self.selectedItems()
 
         if len(selectedItems) != 1:
@@ -172,6 +181,9 @@ class PolygonList(QListWidget):
 
     @pyqtSlot(bool)
     def deleteSelectedPolygons(self, checked: bool) -> None:
+        if not self.contextMenu.isEnabled():
+            return
+
         deletes = []
 
         for i in self.selectedItems():
@@ -189,6 +201,9 @@ class PolygonList(QListWidget):
 
     @pyqtSlot(bool)
     def moveUpSelectedPolygons(self, checked: bool):
+        if not self.contextMenu.isEnabled():
+            return
+
         selectedItems = self.selectedItems()
 
         if len(selectedItems) != 1:
@@ -219,6 +234,9 @@ class PolygonList(QListWidget):
 
     @pyqtSlot(bool)
     def moveDownSelectedPolygons(self, checked: bool):
+        if not self.contextMenu.isEnabled():
+            return
+
         selectedItems = self.selectedItems()
 
         if len(selectedItems) != 1:

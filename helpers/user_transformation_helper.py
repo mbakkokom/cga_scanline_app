@@ -10,7 +10,7 @@ from widgets.raster_surface import RasterSurface
 from widgets.polygon_transformer import PolygonTransformer
 
 from helpers.polygon_transformation_helper import \
-    Matrix33, matmul33, transformPolygon, getTranslationMatrix
+    Matrix33, IDENTITY_MATRIX, matmul33, transformPolygon, getTranslationMatrix
 
 
 class UserTransformationHelper(QObject):
@@ -148,18 +148,19 @@ class UserTransformationHelper(QObject):
 
     @pyqtSlot(tuple)
     def userFinishTransformPolygon(self, mat: Matrix33) -> None:
-        mat = matmul33(
-            getTranslationMatrix(-self.originPoint.x, -self.originPoint.y),
-            mat
-        )
+        if mat != IDENTITY_MATRIX:
+            mat = matmul33(
+                getTranslationMatrix(-self.originPoint.x, -self.originPoint.y),
+                mat
+            )
 
-        mat = matmul33(
-            mat,
-            getTranslationMatrix(self.originPoint.x, self.originPoint.y)
-        )
+            mat = matmul33(
+                mat,
+                getTranslationMatrix(self.originPoint.x, self.originPoint.y)
+            )
 
-        transformPolygon(mat, self._targetShape)
-        self._targetShape.update_cache()
+            transformPolygon(mat, self._targetShape)
+            self._targetShape.update_cache()
 
         self.userFinishedTransformPolygon.emit(self._targetShape)
 
@@ -175,19 +176,20 @@ class UserTransformationHelper(QObject):
 
     @pyqtSlot(tuple)
     def userFinishTransformAllPolygon(self, mat: Matrix33) -> None:
-        mat = matmul33(
-            getTranslationMatrix(-self.originPoint.x, -self.originPoint.y),
-            mat
-        )
+        if mat != IDENTITY_MATRIX:
+            mat = matmul33(
+                getTranslationMatrix(-self.originPoint.x, -self.originPoint.y),
+                mat
+            )
 
-        mat = matmul33(
-            mat,
-            getTranslationMatrix(self.originPoint.x, self.originPoint.y)
-        )
+            mat = matmul33(
+                mat,
+                getTranslationMatrix(self.originPoint.x, self.originPoint.y)
+            )
 
-        for poly in self.rasterSurface.polygonFactory:
-            transformPolygon(mat, poly)
-            poly.update_cache()
+            for poly in self.rasterSurface.polygonFactory:
+                transformPolygon(mat, poly)
+                poly.update_cache()
 
         self.userFinishedTransformAllPolygon.emit()
 

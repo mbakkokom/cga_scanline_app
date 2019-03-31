@@ -254,12 +254,18 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def clearAllObjects(self) -> None:
+        if not self._menuFile.isEnabled():
+            return
+
         self.polygonDataHelper.clearAll()
         self._polygonList.polygonsChange()
         self._rasterSurface.repaint()
 
     @pyqtSlot()
     def fileOpen(self) -> None:
+        if not self._menuFile.isEnabled():
+            return
+
         result: Tuple[str, str] = QFileDialog.getOpenFileName(
             self,
             "Select file",
@@ -293,6 +299,9 @@ class MainWindow(QMainWindow):
 
     @pyqtSlot()
     def fileSaveAs(self) -> None:
+        if not self._menuFile.isEnabled():
+            return
+
         result: Tuple[str, str] = QFileDialog.getSaveFileName(
             self,
             "Select file",
