@@ -4,6 +4,8 @@ from PyQt5.QtCore import Qt, QObject, pyqtSignal, pyqtSlot, QEvent
 
 from primitives.point import Point
 
+from rasterizer.polygon_helper import PolygonHelper
+
 from widgets.raster_surface import RasterSurface
 from widgets.polygon_transformer import PolygonTransformer
 
@@ -20,6 +22,8 @@ class UserTransformationHelper(QObject):
 
     userRequestedOriginPointChange = pyqtSignal()
     userFinishedOriginPointChange = pyqtSignal(bool)
+    userRequestedTransformPolygon = pyqtSignal(PolygonHelper)
+    userFinishedTransformPolygon = pyqtSignal(PolygonHelper)
     userRequestedTransformAllPolygon = pyqtSignal()
     userFinishedTransformAllPolygon = pyqtSignal()
 
@@ -129,6 +133,35 @@ class UserTransformationHelper(QObject):
     def userRequestOriginPointReset(self) -> None:
         self.originPoint.x, self.originPoint.y = 0, 0
         self.rasterSurface.repaint()
+
+    @pyqtSlot(PolygonHelper)
+    def userRequestTransformPolygon(self, targetShape: PolygonHelper) -> None:
+        self.userRequestedTransformPolygon.emit(targetShape)
+
+        self._targetShape = targetShape
+
+        dlg = PolygonTransformer(self.parent())
+        dlg.userAcknowledgedTransformation.connect(
+            self.userFinishTransformPolygon
+        )
+        dlg.show()
+
+    @pyqtSlot(tuple)
+    def userFinishTransformPolygon(self, mat: Matrix33) -> None:
+        mat = matmul33(
+            getTranslationMatrix(-self.originPoint.x, -self.originPoint.y),
+            mat
+        )
+
+        mat = matmul33(
+            mat,
+            getTranslationMatrix(self.originPoint.x, self.originPoint.y)
+        )
+
+        transformPolygon(mat, self._targetShape)
+        self._targetShape.update_cache()
+
+        self.userFinishedTransformPolygon.emit(self._targetShape)
 
     @pyqtSlot()
     def userRequestTransformAllPolygon(self) -> None:

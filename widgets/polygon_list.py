@@ -10,6 +10,7 @@ from helpers.polygon_data_helper import PolygonDataHelper
 class PolygonList(QListWidget):
     polygonsChanged = pyqtSignal()
     polygonEditingRequested = pyqtSignal(PolygonHelper)
+    polygonTransformationRequested = pyqtSignal(PolygonHelper)
 
     def __init__(self, polygonDataHelper: PolygonDataHelper,
                  parent: QWidget = None):
@@ -44,6 +45,14 @@ class PolygonList(QListWidget):
             self.editSelectedPolygons
         )
 
+        self._contextMenuTransform = QAction("T&ransform Polygon", self)
+        self._contextMenuTransform.setEnabled(False)
+        self._contextMenuTransform.setShortcut(Qt.CTRL | Qt.Key_R)
+        self._contextMenuTransform.setShortcutVisibleInContextMenu(True)
+        self._contextMenuTransform.triggered.connect(
+            self.transformSelectedPolygons
+        )
+
         self._contextMenuDelete = QAction("&Delete", self)
         self._contextMenuDelete.setEnabled(False)
         self._contextMenuDelete.setShortcut(Qt.Key_Delete)  # OS binding?
@@ -68,6 +77,7 @@ class PolygonList(QListWidget):
         self.contextMenu.addSeparator()
         self.contextMenu.addActions([
             self._contextMenuEdit,
+            self._contextMenuTransform,
             self._contextMenuDelete
         ])
         self.contextMenu.addSeparator()
@@ -79,6 +89,7 @@ class PolygonList(QListWidget):
         self.addActions([
             self._contextMenuInspect,
             self._contextMenuEdit,
+            self._contextMenuTransform,
             self._contextMenuDelete,
             self._contextMenuMoveUp,
             self._contextMenuMoveDown
@@ -100,6 +111,7 @@ class PolygonList(QListWidget):
         ln_ok = len(sels) > 0
         self._contextMenuInspect.setEnabled(ln_ok)
         self._contextMenuEdit.setEnabled(ln_ok)
+        self._contextMenuTransform.setEnabled(ln_ok)
         self._contextMenuDelete.setEnabled(ln_ok)
         self._contextMenuMoveUp.setEnabled(ln_ok and sels[0].row() > 0)
         self._contextMenuMoveDown.setEnabled(
@@ -126,12 +138,12 @@ class PolygonList(QListWidget):
             idx += 1
 
     @pyqtSlot(bool)
-    def inspectSelectedPolygons(self, checked: bool):
+    def inspectSelectedPolygons(self, checked: bool) -> None:
         for itm in self.selectedItems():
             self.showItemProperties(itm)
 
     @pyqtSlot(bool)
-    def editSelectedPolygons(self, checked: bool):
+    def editSelectedPolygons(self, checked: bool) -> None:
         selectedItems = self.selectedItems()
 
         if len(selectedItems) != 1:
@@ -143,6 +155,20 @@ class PolygonList(QListWidget):
             poly = self.polygonDataHelper.getPolygon(idx)
             if poly is not None:
                 self.polygonEditingRequested.emit(poly)
+
+    @pyqtSlot(bool)
+    def transformSelectedPolygons(self, checked: bool) -> None:
+        selectedItems = self.selectedItems()
+
+        if len(selectedItems) != 1:
+            return
+
+        idx = self.row(selectedItems[0])
+
+        if idx >= 0:
+            poly = self.polygonDataHelper.getPolygon(idx)
+            if poly is not None:
+                self.polygonTransformationRequested.emit(poly)
 
     @pyqtSlot(bool)
     def deleteSelectedPolygons(self, checked: bool) -> None:

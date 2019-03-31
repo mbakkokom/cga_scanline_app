@@ -111,6 +111,14 @@ class MainWindow(QMainWindow):
             .connect(
                 self.enableAllActionableElements
             )
+        self._userTransformationHelper.userRequestedTransformPolygon\
+            .connect(
+                self.disableAllActionableElements
+            )
+        self._userTransformationHelper.userFinishedTransformPolygon\
+            .connect(
+                self.enableAllActionableElements
+            )
         self._userTransformationHelper.userRequestedTransformAllPolygon\
             .connect(
                 self.disableAllActionableElements
@@ -143,6 +151,10 @@ class MainWindow(QMainWindow):
         self._polygonList.polygonEditingRequested.connect(
             self.beginPolygonEditing
         )
+        self._polygonList.polygonTransformationRequested.connect(
+            self._userTransformationHelper.userRequestTransformPolygon
+        )
+
         self._rightPaneLayout.addWidget(self._polygonList)
         self.menuBar().addMenu(self._polygonList.contextMenu)
 
