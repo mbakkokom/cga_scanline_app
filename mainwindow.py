@@ -16,6 +16,7 @@ from widgets.user_edit_panel import UserEditPanel
 from helpers.polygon_data_helper import PolygonDataHelper
 from helpers.user_draw_tool_helper import UserDrawToolHelper
 from helpers.user_edit_tool_helper import UserEditToolHelper
+from helpers.user_transformation_helper import UserTransformationHelper
 
 from fileio import FileIO
 
@@ -99,6 +100,26 @@ class MainWindow(QMainWindow):
         )
         self._userEditToolPanel.hide()
 
+        self._userTransformationHelper = UserTransformationHelper(
+            self._rasterSurface
+        )
+        self._userTransformationHelper.userRequestedOriginPointChange\
+            .connect(
+                self.disableAllActionableElements
+            )
+        self._userTransformationHelper.userFinishedOriginPointChange\
+            .connect(
+                self.enableAllActionableElements
+            )
+        self._userTransformationHelper.userRequestedTransformAllPolygon\
+            .connect(
+                self.disableAllActionableElements
+            )
+        self._userTransformationHelper.userFinishedTransformAllPolygon\
+            .connect(
+                self.enableAllActionableElements
+            )
+
         self._mainSplitter.addWidget(self._rasterSurface)
 
         # Right pane
@@ -125,8 +146,40 @@ class MainWindow(QMainWindow):
         self._rightPaneLayout.addWidget(self._polygonList)
         self.menuBar().addMenu(self._polygonList.contextMenu)
 
+        # transformation menu
+        self.menuBar().addMenu(
+            self._userTransformationHelper.contextMenu
+        )
+
         # Packing
         self.setCentralWidget(self._mainSplitter)
+
+    @pyqtSlot()
+    def disableAllActionableElements(self):
+        self._userDrawToolPanel.hide()
+        self._userEditToolPanel.hide()
+        self.disableActionableElements()
+
+    @pyqtSlot()
+    def disableActionableElements(self):
+        self._menuFile.setEnabled(False)
+        self._polygonList.setEnabled(False)
+        self._polygonList.contextMenu.setEnabled(False)
+        self._userTransformationHelper.contextMenu.setEnabled(False)
+
+    @pyqtSlot()
+    def enableAllActionableElements(self):
+        self._userDrawToolPanel.show()
+        self._userEditToolPanel.hide()
+        self.enableActionableElements()
+
+    @pyqtSlot()
+    def enableActionableElements(self):
+        self._menuFile.setEnabled(True)
+        self._polygonList.setEnabled(True)
+        self._polygonList.contextMenu.setEnabled(True)
+        self._userTransformationHelper.contextMenu.setEnabled(True)
+        self._rasterSurface.repaint()
 
     @pyqtSlot()
     def polygonsChanged(self) -> None:
@@ -135,7 +188,7 @@ class MainWindow(QMainWindow):
     @pyqtSlot(PolygonHelper)
     def userStartedDrawing(self, polygon: PolygonHelper) -> None:
         self._userDrawToolPanel.hide()
-        self._polygonList.setEnabled(False)
+        self.disableActionableElements()
 
     @pyqtSlot(bool, PolygonHelper)
     def userFinishedDrawing(self,
@@ -166,8 +219,7 @@ class MainWindow(QMainWindow):
             self._polygonList.polygonsChange()
 
         self._userDrawToolPanel.show()
-        self._polygonList.setEnabled(True)
-        self._rasterSurface.repaint()
+        self.enableActionableElements()
 
     @pyqtSlot(PolygonHelper)
     def beginPolygonEditing(self, polygon: PolygonHelper) -> None:
@@ -176,8 +228,8 @@ class MainWindow(QMainWindow):
     @pyqtSlot(PolygonHelper)
     def userStartedEditing(self, polygon: PolygonHelper) -> None:
         self._userDrawToolPanel.hide()
-        self._polygonList.setEnabled(False)
         self._userEditToolPanel.show()
+        self.disableActionableElements()
 
     @pyqtSlot(bool, PolygonHelper)
     def userFinishedEditing(self,
@@ -185,8 +237,8 @@ class MainWindow(QMainWindow):
                             polygon: PolygonHelper) -> None:
         self._rasterSurface.repaint()
         self._userDrawToolPanel.show()
-        self._polygonList.setEnabled(True)
         self._userEditToolPanel.hide()
+        self.enableActionableElements()
 
     @pyqtSlot()
     def clearAllObjects(self) -> None:

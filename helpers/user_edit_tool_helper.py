@@ -14,6 +14,10 @@ class UserEditToolHelper(QObject):
     polygonEditStarted = pyqtSignal(PolygonHelper)
     polygonEditFinished = pyqtSignal(bool, PolygonHelper)
 
+    pointColor = QColor(75, 125, 255, 255)
+    activePointColor = QColor(255, 125, 75, 255)
+    lineColor = QColor(255, 225, 75, 255)
+
     def __init__(self, parent: QObject = None):
         super().__init__(parent)
         self._editingPolygon: Optional[PolygonHelper] = None
@@ -141,9 +145,9 @@ class UserEditToolHelper(QObject):
         if self._editingPolygon is None:
             return
 
-        pointColor = QColor(75, 125, 255, 255)
-        activePointColor = QColor(255, 125, 75, 255)
-        lineColor = QColor(255, 225, 75, 255)
+        pointColor = self.pointColor
+        activePointColor = self.activePointColor
+        lineColor = self.lineColor
 
         pen: QPen = painter.pen()
         pen.setColor(lineColor)
