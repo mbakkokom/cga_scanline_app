@@ -85,7 +85,7 @@ class PolygonTransformer(QWidget):
         self._rotationThetaLabel = QLabel("θ", self)
         self._rotationThetaText = QLineEdit("0", self)
         # FIXME avoid infinity
-        self._scalingXText.setValidator(QDoubleValidator(self))
+        self._rotationThetaText.setValidator(QDoubleValidator(self))
 
         self._rotationLayout.addWidget(self._rotationThetaLabel, 0, 0)
         self._rotationLayout.addWidget(self._rotationThetaText, 0, 1)
